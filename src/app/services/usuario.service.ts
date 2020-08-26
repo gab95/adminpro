@@ -9,8 +9,10 @@ import { environment } from '../../environments/environment';
 
 import { RegisterForm } from '../interfaces/registerForm.interface';
 import { LoginForm } from '../interfaces/loginForm.interface';
+import { CargarUsuario } from '../interfaces/cargar-usuarios.interface';
 
 import { Usuario } from '../models/usuario.model';
+import Swal from 'sweetalert2';
 
 const baseUrl = environment.baseUrl;
 declare const gapi: any;
@@ -39,6 +41,14 @@ export class UsuarioService {
     return this.usuario.uid || '';
   }
 
+  get headers() {
+    return {
+      headers: {
+        authorization: `Bearer ${this.token}`,
+      },
+    };
+  }
+
   googleInit() {
     return new Promise((resolve) => {
       console.log('google init');
@@ -54,24 +64,18 @@ export class UsuarioService {
   }
 
   validarToken(): Observable<boolean> {
-    return this.http
-      .get(`${baseUrl}/auth/renew`, {
-        headers: {
-          authorization: `Bearer ${this.token}`,
-        },
-      })
-      .pipe(
-        map((resp: any) => {
-          const { email, google, nombre, role, img = '', uid } = resp.usuario;
+    return this.http.get(`${baseUrl}/auth/renew`, this.headers).pipe(
+      map((resp: any) => {
+        const { email, google, nombre, role, img = '', uid } = resp.usuario;
 
-          this.usuario = new Usuario(nombre, email, '', img, google, role, uid);
+        this.usuario = new Usuario(nombre, email, '', img, google, role, uid);
 
-          localStorage.setItem('token', resp.token);
+        localStorage.setItem('token', resp.token);
 
-          return true;
-        }),
-        catchError((error) => of(false))
-      );
+        return true;
+      }),
+      catchError((error) => of(false))
+    );
   }
 
   crearUsuario(formData: RegisterForm) {
@@ -106,10 +110,44 @@ export class UsuarioService {
 
   actualizarPerfil(data: { email: string; nombre: string; role: string }) {
     data = { ...data, role: this.usuario.role };
-    return this.http.put(`${baseUrl}/usuarios/${this.uid}`, data, {
-      headers: {
-        authorization: `Bearer ${this.token}`,
-      },
-    });
+    return this.http.put(`${baseUrl}/usuarios/${this.uid}`, data, this.headers);
+  }
+
+  cargarUsuarios(desde: number = 0) {
+    return this.http
+      .get<CargarUsuario>(`${baseUrl}/usuarios?desde=${desde}`, this.headers)
+      .pipe(
+        map((resp) => {
+          const usuarios = resp.usuarios.map(
+            (user) =>
+              new Usuario(
+                user.nombre,
+                user.email,
+                '',
+                user.img,
+                user.google,
+                user.role,
+                user.uid
+              )
+          );
+
+          return {
+            usuarios,
+            totalRegistros: resp.totalRegistros,
+          };
+        })
+      );
+  }
+
+  guardarRoleUsuario(usuario: Usuario) {
+    return this.http.put(
+      `${baseUrl}/usuarios/${usuario.uid}`,
+      usuario,
+      this.headers
+    );
+  }
+
+  eliminarUsuario(usuario: Usuario) {
+    return this.http.delete(`${baseUrl}/usuarios/${usuario.uid}`, this.headers);
   }
 }
