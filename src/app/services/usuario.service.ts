@@ -1,13 +1,16 @@
 import { Injectable, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+
+import { map, tap, catchError } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+
+import { environment } from '../../environments/environment';
 
 import { RegisterForm } from '../interfaces/registerForm.interface';
 import { LoginForm } from '../interfaces/loginForm.interface';
 
-import { environment } from '../../environments/environment';
-import { map, tap, catchError } from 'rxjs/operators';
-import { Observable, of } from 'rxjs';
-import { Router } from '@angular/router';
+import { Usuario } from '../models/usuario.model';
 
 const baseUrl = environment.baseUrl;
 declare const gapi: any;
@@ -18,12 +21,22 @@ declare const gapi: any;
 export class UsuarioService {
   auth2: any;
 
+  usuario: Usuario;
+
   constructor(
     private http: HttpClient,
     private router: Router,
     private ngZone: NgZone
   ) {
     this.googleInit();
+  }
+
+  get token(): string {
+    return localStorage.getItem('token') || '';
+  }
+
+  get uid(): string {
+    return this.usuario.uid || '';
   }
 
   googleInit() {
@@ -41,18 +54,22 @@ export class UsuarioService {
   }
 
   validarToken(): Observable<boolean> {
-    const token = localStorage.getItem('token') || '';
     return this.http
       .get(`${baseUrl}/auth/renew`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          authorization: `Bearer ${this.token}`,
         },
       })
       .pipe(
-        tap((resp: any) => {
+        map((resp: any) => {
+          const { email, google, nombre, role, img = '', uid } = resp.usuario;
+
+          this.usuario = new Usuario(nombre, email, '', img, google, role, uid);
+
           localStorage.setItem('token', resp.token);
+
+          return true;
         }),
-        map((resp) => true),
         catchError((error) => of(false))
       );
   }
@@ -84,6 +101,15 @@ export class UsuarioService {
       this.ngZone.run(() => {
         this.router.navigate(['/login']);
       });
+    });
+  }
+
+  actualizarPerfil(data: { email: string; nombre: string; role: string }) {
+    data = { ...data, role: this.usuario.role };
+    return this.http.put(`${baseUrl}/usuarios/${this.uid}`, data, {
+      headers: {
+        authorization: `Bearer ${this.token}`,
+      },
     });
   }
 }
