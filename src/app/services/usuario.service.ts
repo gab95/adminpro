@@ -12,7 +12,6 @@ import { LoginForm } from '../interfaces/loginForm.interface';
 import { CargarUsuario } from '../interfaces/cargar-usuarios.interface';
 
 import { Usuario } from '../models/usuario.model';
-import Swal from 'sweetalert2';
 
 const baseUrl = environment.baseUrl;
 declare const gapi: any;
