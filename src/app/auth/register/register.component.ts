@@ -20,7 +20,7 @@ export class RegisterComponent {
       email: ['test@mail.com', [Validators.required, Validators.email]],
       password: ['111', Validators.required],
       password2: ['111', Validators.required],
-      terminos: [false, Validators.required],
+      terminos: [false, Validators.requiredTrue],
     },
     {
       validators: this.passwordsIguales('password', 'password2'),
@@ -42,9 +42,7 @@ export class RegisterComponent {
 
     this._usuarioService.crearUsuario(this.registerForm.value).subscribe(
       (resp) => this.router.navigate(['/dashboard']),
-      (err) => {
-        Swal.fire('Error', err.error.msg, 'error');
-      }
+      (err) => Swal.fire('Error', err.error.msg, 'error')
     );
   }
 
@@ -84,4 +82,3 @@ export class RegisterComponent {
     return !this.registerForm.get('terminos').value && this.formSubmitted;
   }
 }
-//11.login normal

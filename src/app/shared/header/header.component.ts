@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UsuarioService } from '../../services/usuario.service';
 import { Usuario } from '../../models/usuario.model';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-header',
@@ -10,7 +11,7 @@ import { Usuario } from '../../models/usuario.model';
 export class HeaderComponent implements OnInit {
   usuario: Usuario;
 
-  constructor(private _usuarioService: UsuarioService) {
+  constructor(private router: Router, private _usuarioService: UsuarioService) {
     //getter
     this.usuario = _usuarioService.usuario;
   }
@@ -19,5 +20,12 @@ export class HeaderComponent implements OnInit {
 
   logout() {
     this._usuarioService.logout();
+  }
+
+  buscar(termino: string) {
+    if (termino.length === 0) {
+      return;
+    }
+    this.router.navigate(['/dashboard/buscar', termino]);
   }
 }

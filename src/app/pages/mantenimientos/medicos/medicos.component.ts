@@ -67,6 +67,7 @@ export class MedicosComponent implements OnInit {
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Si, borrarlo',
+      cancelButtonText: 'Cancelar',
     }).then((result) => {
       if (result.value) {
         this._medicoService.borrarMedico(medico._id).subscribe((resp) => {
@@ -94,13 +95,6 @@ export class MedicosComponent implements OnInit {
         }
       },
     });
-
-    // if (value.trim().length > 0) {
-    //   this._medicoService.crearMedico(value).subscribe(
-    //     (resp: any) => this.medicos.push(resp.hospital),
-    //     (err) => Swal.fire('Error', err.error.msg, 'error')
-    //   );
-    // }
   }
 
   abrirModal(medico: Medico) {
